@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FPV Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🛸</text></svg>" />
+<script>
+  // Applied again properly (with the full token set) by
+  // applyThemeVars() once React mounts — this just prevents a dark
+  // flash on load for anyone who picked the light theme, by setting
+  // the one thing paint actually depends on before first paint.
+  (function () {
+    try {
+      var id = localStorage.getItem("fpvtracker_theme");
+      if (id === "light") {
+        var root = document.documentElement.style;
+        root.setProperty("--bg", "#F6EFE4");
+        root.setProperty("--bg-panel", "#EFE4D2");
+        root.setProperty("--text", "#3B2E20");
+        root.setProperty("--border", "#D6C3A1");
+        document.documentElement.setAttribute("data-theme-mode", "light");
+      }
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
