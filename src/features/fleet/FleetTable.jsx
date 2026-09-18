@@ -1,17 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { computeStatus, progressOf, latestMessage, hasRepairFlags } from "../../domain/status";
 import { StatusLabel, ProgressBar, HandlerTag, Led } from "../../components";
 import { STATUS_META } from "../../app/statusMeta";
 import { fmtDateTime } from "../../lib/format";
+import { HistoryItem } from "../drone-detail/HistoryItem";
 
-function DroneRow({ drone, onClick, onOpenHistory }) {
+function HistoryRow({ drone, colSpan }) {
+  const entries = [...drone.history].reverse();
+  return (
+    <tr className="history-row">
+      <td colSpan={colSpan}>
+        <div className="history-row-inner">
+          <div className="section-label" style={{ marginBottom: 6 }}>HISTORY — {drone.serial}</div>
+          {entries.length === 0 ? (
+            <div className="section-empty">Nothing logged yet.</div>
+          ) : (
+            entries.map((h) => <HistoryItem key={h.id} item={h} />)
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function DroneRow({ drone, onClick, expanded, onToggleExpand }) {
   const status = computeStatus(drone);
   const meta = STATUS_META[status];
   const { done, total } = progressOf(drone);
   const flagged = hasRepairFlags(drone);
   return (
-    <tr onClick={onClick}>
+    <tr onClick={onClick} className={expanded ? "is-expanded" : ""}>
       <td className="cell-serial" data-label="Serial">
         {flagged && (
           <span className="cell-flag-led" title="Has steps flagged for repair">
@@ -28,10 +47,13 @@ function DroneRow({ drone, onClick, onOpenHistory }) {
       <td className="cell-chevron">
         <button
           type="button"
-          className="chevron-btn"
-          title="View history"
-          aria-label={`View history for ${drone.serial}`}
-          onClick={(e) => { e.stopPropagation(); onOpenHistory(drone.id); }}
+          className={`chevron-btn ${expanded ? "is-open" : ""}`}
+          title={expanded ? "Hide history" : "Show history"}
+          aria-label={`${expanded ? "Hide" : "Show"} history for ${drone.serial}`}
+          aria-expanded={expanded}
+          /* Stops the click reaching the row, which would open the side
+             panel — this control only expands the history below. */
+          onClick={(e) => { e.stopPropagation(); onToggleExpand(drone.id); }}
         >
           <ChevronRight size={16} />
         </button>
@@ -40,23 +62,35 @@ function DroneRow({ drone, onClick, onOpenHistory }) {
   );
 }
 
-export function FleetTable({ drones, onSelect, onOpenHistory }) {
+export function FleetTable({ drones, onSelect }) {
+  const [expandedId, setExpandedId] = useState(null);
+  const toggleExpand = (id) => setExpandedId((cur) => (cur === id ? null : id));
+
   if (!drones.length) {
     return <div className="empty-panel">No drones match here yet.</div>;
   }
+  const headers = ["Serial", "Status", "Progress", "Handler", "Notes", "Updated", ""];
   return (
     <div className="fleet-table-wrap">
       <table className="fleet-table">
         <thead>
           <tr>
-            {["Serial", "Status", "Progress", "Handler", "Notes", "Updated", ""].map((h) => (
+            {headers.map((h) => (
               <th key={h} className={h === "Updated" ? "align-right" : ""}>{h.toUpperCase()}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {drones.map((d) => (
-            <DroneRow key={d.id} drone={d} onClick={() => onSelect(d.id)} onOpenHistory={onOpenHistory} />
+            <React.Fragment key={d.id}>
+              <DroneRow
+                drone={d}
+                onClick={() => onSelect(d.id)}
+                expanded={expandedId === d.id}
+                onToggleExpand={toggleExpand}
+              />
+              {expandedId === d.id && <HistoryRow drone={d} colSpan={headers.length} />}
+            </React.Fragment>
           ))}
         </tbody>
       </table>

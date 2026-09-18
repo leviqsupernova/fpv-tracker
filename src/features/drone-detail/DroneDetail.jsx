@@ -8,27 +8,17 @@ import { fmtDateTime } from "../../lib/format";
 import { ChecklistList } from "./ChecklistList";
 import { HistoryItem } from "./HistoryItem";
 
-export function DroneDetail({ drone, onToggleStep, onToggleAllSteps, onToggleStepFlag, onToggleFault, onAddNote, onSetStatus, onSetHandler, onStartRepair, onFinishRepair, onDelete, onFaultyModule, onFinish, handlers, initialSection }) {
+export function DroneDetail({ drone, onToggleStep, onToggleAllSteps, onToggleStepFlag, onToggleFault, onAddNote, onSetStatus, onSetHandler, onStartRepair, onFinishRepair, onDelete, onFaultyModule, onFinish, handlers }) {
   const [noteText, setNoteText] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
   const [editingHandler, setEditingHandler] = useState(false);
   const savedFlashTimer = useRef(null);
-  const historyRef = useRef(null);
   const flashSaved = () => {
     setSavedFlash(true);
     if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
     savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 1400);
   };
   useEffect(() => () => clearTimeout(savedFlashTimer.current), []);
-  // Opened via the fleet-table history button rather than the row
-  // itself — jump straight to the history log instead of making
-  // people scroll past the checklist to find it.
-  useEffect(() => {
-    if (initialSection === "history" && historyRef.current) {
-      historyRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drone.id, initialSection]);
   const status = computeStatus(drone);
   const meta = STATUS_META[status];
   const { done, total } = progressOf(drone);
@@ -144,7 +134,7 @@ export function DroneDetail({ drone, onToggleStep, onToggleAllSteps, onToggleSte
           <Btn variant="ghost" icon={Trash2} onClick={onDelete}>Delete</Btn>
         </div>
 
-        <div className="history-block" ref={historyRef}>
+        <div className="history-block">
           <div className="section-label" style={{ marginBottom: 4 }}>HISTORY</div>
           {drone.history.length === 0 && <div className="section-empty">Nothing logged yet.</div>}
           {[...drone.history].reverse().map((h) => <HistoryItem key={h.id} item={h} />)}

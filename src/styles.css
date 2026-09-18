@@ -98,33 +98,29 @@ select { appearance: none; }
   background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.5;
 }
 .topbar-inner {
-  max-width: 1240px; margin: 0 auto; width: 100%; padding: 10px 40px 10px 78px;
+  max-width: 1240px; margin: 0 auto; width: 100%; padding: 10px 40px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   min-height: 72px;
 }
 .content-col { max-width: 1240px; margin: 0 auto; width: 100%; padding: 36px 40px 80px; }
 .wordmark { font-size: 21px; letter-spacing: 0.06em; color: var(--text); font-weight: 600; }
 
-/* Anchored to the left edge of the viewport, not to the centred
-   1240px column — on a wide screen that column starts well inside the
-   window, which is why the logo previously sat next to the wordmark
-   instead of at the edge of the page. Taken out of the inner row's
-   flow entirely so it can fill the bar's full height without
-   stretching the row or being pushed around when the row wraps. */
-.topbar-brand {
-  position: absolute; left: 0; top: 0; bottom: 0; z-index: 2;
-  display: flex; align-items: center; padding: 8px 0 8px 18px; cursor: default;
-}
-.brand-logo { display: block; height: 100%; width: auto; max-height: 56px; object-fit: contain; }
+/* The brand sits inside .topbar-inner, which shares its max-width and
+   horizontal padding with .content-col — so the logo's left edge lands
+   on exactly the same vertical line as the stats panel and the fleet
+   table below it. Anchoring it to the viewport edge instead would put
+   it left of that line on any window wider than 1240px. */
+.topbar-brand-group { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.topbar-brand { display: flex; align-items: center; height: 56px; flex-shrink: 0; cursor: default; }
+.brand-logo { display: block; height: 100%; width: auto; object-fit: contain; }
 [data-theme-mode="light"] .brand-logo { filter: invert(1); }
 .cursor-blink { display: inline-block; color: var(--accent); margin-left: 2px; animation: blink 1.1s step-end infinite; }
 @keyframes blink { 0%, 45% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
 @media (max-width: 860px) {
-  .topbar-inner { padding-left: 62px; padding-right: 20px; min-height: 64px; }
+  .topbar-inner { padding-left: 20px; padding-right: 20px; min-height: 64px; }
   .content-col { padding-left: 20px; padding-right: 20px; }
-  .topbar-brand { padding-left: 12px; }
-  .brand-logo { max-height: 44px; }
+  .topbar-brand { height: 44px; }
 }
 
 /* ---------- buttons ---------- */
@@ -257,6 +253,22 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 .chevron-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); color: var(--text); }
 .chevron-btn:active { transform: scale(0.92); }
 .chevron-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chevron-btn svg { transition: transform 0.18s var(--ease); }
+.chevron-btn.is-open { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.chevron-btn.is-open svg { transform: rotate(90deg); }
+
+/* The history log the chevron reveals, as a row inside the table body
+   rather than a panel over it — the fleet list stays where it is and
+   the entry opens downwards in place. */
+.fleet-table tbody tr.is-expanded { background: var(--bg-hover); }
+.fleet-table tbody tr.history-row { cursor: default; background: var(--bg-panel); }
+.fleet-table tbody tr.history-row:hover { background: var(--bg-panel); }
+.fleet-table tbody tr.history-row > td { padding: 0; }
+.history-row-inner {
+  padding: 14px 20px 18px 20px; border-left: 2px solid var(--accent);
+  animation: history-open 0.18s var(--ease);
+}
+@keyframes history-open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Below tablet width, the table stops being a table — each row
    becomes a bordered card and every cell becomes a label/value line,
@@ -286,6 +298,11 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
   .cell-updated { text-align: right; }
   .cell-chevron { width: 100%; }
   .cell-chevron::before { content: "History"; }
+  /* The history row is a card of its own, not a label/value line. */
+  .fleet-table tbody tr.history-row { padding: 0; border-color: var(--accent); }
+  .fleet-table tbody tr.history-row > td { display: block; padding: 0; border-bottom: none; }
+  .fleet-table tbody tr.history-row > td::before { content: none; }
+  .history-row-inner { padding: 12px 14px 14px; }
 }
 .empty-panel {
   border: 1px solid var(--border); border-radius: 4px; padding: 64px 20px; text-align: center;
@@ -306,8 +323,6 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 
 /* ---------- filter rows ---------- */
 .filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.filter-row-label { color: var(--text-faint); font-size: 12px; letter-spacing: 0.05em; margin-right: 2px; }
-.filter-row-spacer { width: 54px; }
 
 /* ---------- error banner ---------- */
 .error-banner {

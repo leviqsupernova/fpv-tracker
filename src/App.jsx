@@ -31,7 +31,6 @@ export default function App() {
   const [handlers, saveHandlers, retryHandlers] = useHandlers(client, !!sbConfig, DEFAULT_HANDLERS);
 
   const [selectedId, setSelectedId] = useState(null);
-  const [detailSection, setDetailSection] = useState(null);
   const [filter, setFilter] = useState("ALL");
   const [yearFilter, setYearFilter] = useState(null);
   const [monthFilter, setMonthFilter] = useState(null);
@@ -270,8 +269,8 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, [selected]);
 
-  const openDrone = (id, section = null) => { setSelectedId(id); setDetailSection(section); };
-  const closePanel = () => { setSelectedId(null); setDetailSection(null); };
+  const openDrone = (id) => setSelectedId(id);
+  const closePanel = () => setSelectedId(null);
 
   const connected = !!sbConfig;
 
@@ -279,11 +278,11 @@ export default function App() {
     <div className="app-shell">
       {/* TOP BAR */}
       <div className="topbar">
-        <span className="topbar-brand" onClick={handleLogoClick}>
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="brand-logo" />
-        </span>
         <div className="topbar-inner">
-          <div className="flex items-center gap-4">
+          <div className="topbar-brand-group">
+            <span className="topbar-brand" onClick={handleLogoClick}>
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="brand-logo" />
+            </span>
             <Led color="var(--accent)" size="lg" />
             <span className="wordmark">FPV TRACKER<span className="cursor-blink">▊</span></span>
           </div>
@@ -324,14 +323,12 @@ export default function App() {
 
         {availableYears.length > 0 && (
           <div className="filter-row" style={{ marginBottom: 8 }}>
-            <span className="filter-row-label">PERIOD</span>
             <Chip active={yearFilter == null} onClick={() => { setYearFilter(null); setMonthFilter(null); }}>All Time</Chip>
             {availableYears.map((y) => <Chip key={y} active={yearFilter === y} onClick={() => { setYearFilter(y); setMonthFilter(null); }}>{y}</Chip>)}
           </div>
         )}
         {yearFilter != null && availableMonths.length > 0 && (
           <div className="filter-row" style={{ marginBottom: 20 }}>
-            <span className="filter-row-spacer" />
             <Chip active={monthFilter == null} onClick={() => setMonthFilter(null)}>All Of {yearFilter}</Chip>
             {availableMonths.map((m) => <Chip key={m} active={monthFilter === m} onClick={() => setMonthFilter(m)}>{MONTH_NAMES[m]}</Chip>)}
           </div>
@@ -358,7 +355,7 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <FleetTable drones={filteredDrones} onSelect={openDrone} onOpenHistory={(id) => openDrone(id, "history")} />
+          <FleetTable drones={filteredDrones} onSelect={openDrone} />
         )}
       </div>
 
@@ -371,7 +368,6 @@ export default function App() {
           <DroneDetail
             drone={selected}
             handlers={handlers}
-            initialSection={detailSection}
             onToggleStep={(step) => handleToggleStep(selected.id, step)}
             onToggleAllSteps={(value) => handleToggleAllSteps(selected.id, value)}
             onToggleStepFlag={(step) => handleToggleStepFlag(selected.id, step)}
