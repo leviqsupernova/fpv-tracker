@@ -22,7 +22,6 @@ import { uid } from "./lib/id";
 const DEFAULT_HANDLERS = ["Vladiq", "Rost", "Olejeq", "Tom", "Timur"];
 
 export default function App() {
-  const { theme } = useThemeMode();
   const { config: sbConfig, client, connect: connectSupabase, disconnect: disconnectSupabase } = useSupabaseConnection();
   const queryKey = useMemo(() => ["drones", sbConfig?.url, sbConfig?.anonKey], [sbConfig]);
   const {
@@ -32,6 +31,7 @@ export default function App() {
   const [handlers, saveHandlers, retryHandlers] = useHandlers(client, !!sbConfig, DEFAULT_HANDLERS);
 
   const [selectedId, setSelectedId] = useState(null);
+  const [detailSection, setDetailSection] = useState(null);
   const [filter, setFilter] = useState("ALL");
   const [yearFilter, setYearFilter] = useState(null);
   const [monthFilter, setMonthFilter] = useState(null);
@@ -270,8 +270,8 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, [selected]);
 
-  const openDrone = (id) => setSelectedId(id);
-  const closePanel = () => setSelectedId(null);
+  const openDrone = (id, section = null) => { setSelectedId(id); setDetailSection(section); };
+  const closePanel = () => { setSelectedId(null); setDetailSection(null); };
 
   const connected = !!sbConfig;
 
@@ -281,15 +281,10 @@ export default function App() {
       <div className="topbar">
         <div className="topbar-inner">
           <div className="flex items-center gap-4">
-            <span onClick={handleLogoClick} style={{ cursor: "default", display: "inline-flex", alignItems: "center", gap: 12 }}>
-              <Led color="var(--accent)" size="lg" />
-              <img
-                src={`${import.meta.env.BASE_URL}logo.png`}
-                alt=""
-                className="brand-logo"
-                style={{ height: 26, width: "auto", filter: theme.mode === "light" ? "invert(1)" : "none" }}
-              />
+            <span className="topbar-brand" onClick={handleLogoClick}>
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="brand-logo" />
             </span>
+            <Led color="var(--accent)" size="lg" />
             <span className="wordmark">FPV TRACKER<span className="cursor-blink">▊</span></span>
           </div>
           <div className="flex items-center gap-3">
@@ -297,7 +292,6 @@ export default function App() {
             <IconBtn icon={Users} onClick={() => setModal({ type: "handlers" })} title="Manage handlers" />
             <IconBtn icon={SupabaseIcon} onClick={() => setModal({ type: "connect" })} title="Supabase connection" />
             <IconBtn icon={Settings} onClick={() => setModal({ type: "settings" })} title="Settings" />
-            <Btn variant="ghost" size="sm" icon={Upload} onClick={() => setModal({ type: "import" })}>Import</Btn>
             <Btn variant="ghost" size="sm" icon={Download} disabled={!drones.length} onClick={() => exportWorkbook(drones)}>Export</Btn>
           </div>
         </div>
@@ -364,7 +358,7 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <FleetTable drones={filteredDrones} onSelect={openDrone} />
+          <FleetTable drones={filteredDrones} onSelect={openDrone} onOpenHistory={(id) => openDrone(id, "history")} />
         )}
       </div>
 
@@ -377,6 +371,7 @@ export default function App() {
           <DroneDetail
             drone={selected}
             handlers={handlers}
+            initialSection={detailSection}
             onToggleStep={(step) => handleToggleStep(selected.id, step)}
             onToggleAllSteps={(value) => handleToggleAllSteps(selected.id, value)}
             onToggleStepFlag={(step) => handleToggleStepFlag(selected.id, step)}

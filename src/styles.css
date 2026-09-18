@@ -25,8 +25,8 @@
   --repair: #FF6B6B;
   --repair-soft: rgba(255, 107, 107, 0.10);
   --repair-border: rgba(255, 107, 107, 0.4);
-  --none: #8A8D97;
-  --none-soft: rgba(138, 141, 151, 0.10);
+  --none: #F2B84B;
+  --none-soft: rgba(242, 184, 75, 0.10);
   --on-accent: #031006;
   --on-ready: #03100A;
   --font: "IBM Plex Mono", "SFMono-Regular", ui-monospace, Consolas, Menlo, "Liberation Mono", monospace;
@@ -39,8 +39,11 @@
 /* ---------- layout utilities ----------
    The deployed site has no Tailwind (that's only available inside
    Claude's own artifact preview) — these are the small set of
-   flex/gap utilities the components actually use, defined for real. */
-.flex { display: flex; }
+   flex/gap utilities the components actually use, defined for real.
+   `.flex` wraps by default — rows built from it drop onto a second
+   line instead of overflowing past the edge of their container; on
+   wide screens, where nothing needs to wrap, this changes nothing. */
+.flex { display: flex; flex-wrap: wrap; }
 .flex-col { flex-direction: column; }
 .flex-wrap { flex-wrap: wrap; }
 .items-center { align-items: center; }
@@ -55,8 +58,8 @@
 
 /* ---------- reset / base ---------- */
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); }
-body { font-family: var(--font); color: var(--text); }
+html, body { margin: 0; background: var(--bg); overflow-x: hidden; }
+body { font-family: var(--font); color: var(--text); max-width: 100vw; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
@@ -78,17 +81,29 @@ select { appearance: none; }
   background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.5;
 }
 .topbar-inner {
-  max-width: 1240px; margin: 0 auto; width: 100%; padding: 20px 40px;
+  max-width: 1240px; margin: 0 auto; width: 100%; padding: 10px 40px 10px 20px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
 }
 .content-col { max-width: 1240px; margin: 0 auto; width: 100%; padding: 36px 40px 80px; }
 .wordmark { font-size: 21px; letter-spacing: 0.06em; color: var(--text); font-weight: 600; }
-.brand-logo { display: block; object-fit: contain; }
+
+/* Sized off its own fixed height rather than the row's padding, so it
+   can fill most of the bar's height without the whole bar growing to
+   match. Kept in normal flex flow (no negative margins) so it can
+   never push the row wider than its container. */
+.topbar-brand {
+  display: flex; align-items: center; cursor: default;
+  height: 56px; flex-shrink: 0; min-width: 0;
+}
+.brand-logo { display: block; height: 100%; max-width: 100%; width: auto; object-fit: contain; }
+[data-theme-mode="light"] .brand-logo { filter: invert(1); }
 .cursor-blink { display: inline-block; color: var(--accent); margin-left: 2px; animation: blink 1.1s step-end infinite; }
 @keyframes blink { 0%, 45% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
 @media (max-width: 860px) {
-  .topbar-inner, .content-col { padding-left: 20px; padding-right: 20px; }
+  .topbar-inner { padding-left: 14px; padding-right: 20px; }
+  .content-col { padding-left: 20px; padding-right: 20px; }
+  .topbar-brand { height: 44px; }
 }
 
 /* ---------- buttons ---------- */
@@ -210,7 +225,45 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 .cell-flag-led { display: inline-flex; margin-right: 8px; vertical-align: middle; }
 .cell-notes { color: var(--text-dim); font-size: 14.5px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell-updated { color: var(--text-faint); font-size: 13.5px; text-align: right; }
-.cell-chevron { width: 24px; color: var(--text-faint); }
+.cell-chevron { width: 44px; text-align: right; }
+.chevron-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 4px;
+  background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-dim);
+  cursor: pointer; padding: 0;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.1s var(--ease);
+}
+.chevron-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); color: var(--text); }
+.chevron-btn:active { transform: scale(0.92); }
+.chevron-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Below tablet width, the table stops being a table — each row
+   becomes a bordered card and every cell becomes a label/value line,
+   so the fleet is readable without pinch-zooming or scrolling
+   sideways through a table built for a desktop-width screen. */
+@media (max-width: 860px) {
+  .fleet-table { min-width: 0; }
+  .fleet-table, .fleet-table tbody, .fleet-table tr, .fleet-table td { display: block; width: 100%; }
+  .fleet-table thead { display: none; }
+  .fleet-table tbody tr {
+    border: 1px solid var(--border); border-radius: 6px; padding: 4px 14px; margin-bottom: 10px;
+  }
+  .fleet-table tbody tr:last-child { margin-bottom: 0; }
+  .fleet-table td {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+  }
+  .fleet-table tr td:last-child { border-bottom: none; }
+  .fleet-table td::before {
+    content: attr(data-label); color: var(--text-faint); font-size: 11.5px; letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+  .cell-serial { font-size: 15.5px; }
+  .cell-notes { max-width: none; white-space: normal; text-align: right; overflow: visible; }
+  .cell-updated { text-align: right; }
+  .cell-chevron { width: 100%; }
+  .cell-chevron::before { content: "History"; }
+}
 .empty-panel {
   border: 1px solid var(--border); border-radius: 4px; padding: 64px 20px; text-align: center;
   color: var(--text-dim); font-size: 15px;
@@ -270,9 +323,9 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 /* ---------- drone detail ---------- */
 .detail-header { padding: 20px 28px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .detail-serial { font-size: 21px; color: var(--text); font-weight: 500; }
-.detail-meta-row { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+.detail-meta-row { display: flex; align-items: center; gap: 16px; row-gap: 6px; margin-top: 12px; flex-wrap: wrap; }
 .detail-meta-item { color: var(--text-faint); font-size: 13.5px; }
-.detail-status-row { display: flex; gap: 6px; margin-top: 16px; }
+.detail-status-row { display: flex; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
 .detail-body { flex: 1; overflow-y: auto; padding: 20px 28px; }
 .next-banner {
   border-radius: 4px; padding: 13px 16px; margin-bottom: 14px; font-size: 15px; font-weight: 500;
@@ -284,7 +337,7 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 .section-header-row { display: flex; align-items: center; justify-content: between; margin-bottom: 10px; }
 .section-label { color: var(--text-dim); font-size: 13.5px; letter-spacing: 0.04em; }
 .section-empty { color: var(--text-faint); font-size: 14px; }
-.action-row { display: flex; gap: 10px; margin-top: 24px; }
+.action-row { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
 .history-block { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px; }
 
 .handler-edit-trigger {
@@ -412,7 +465,7 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 .theme-swatch.active { border-color: var(--accent); background: var(--accent-soft); }
 .theme-swatch-preview { display: inline-flex; gap: 4px; flex-shrink: 0; }
 .theme-swatch-dot { width: 13px; height: 13px; border-radius: 50%; display: inline-block; border: 1px solid rgba(128, 128, 128, 0.25); }
-.theme-swatch-label { flex: 1; }
+.theme-swatch-label { flex: 1; text-transform: uppercase; letter-spacing: 0.03em; }
 .theme-swatch-check { color: var(--accent); flex-shrink: 0; }
 
 /* ---------- firmware & config placeholder ---------- */

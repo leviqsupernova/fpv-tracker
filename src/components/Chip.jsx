@@ -18,6 +18,8 @@ const chipStyle = ({ active, chipColor }) => ({
   borderRadius: 3,
   fontSize: 14,
   fontFamily: "inherit",
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
   border: "1px solid",
   borderColor: active ? chipColor || "var(--accent)" : "var(--border)",
   backgroundColor: active ? (chipColor ? `${chipColor}1F` : "var(--accent-soft)") : "transparent",

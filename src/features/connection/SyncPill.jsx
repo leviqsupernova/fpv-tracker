@@ -1,18 +1,29 @@
-import React from "react";
-import { Cloud, CloudOff, AlertTriangle, WifiOff } from "lucide-react";
-import { Led } from "../../components";
+import React, { useEffect, useState } from "react";
+import { Cloud, AlertTriangle, WifiOff } from "lucide-react";
+import { Led, SupabaseIcon } from "../../components";
 import { ConnectionLed } from "./ConnectionLed";
 import { fmtAgo } from "../../lib/format";
 
 export function SyncPill({ sync, connected, realtimeStatus, online = true }) {
   const healthy = connected && online && sync.status !== "error" && sync.status !== "offline" && realtimeStatus !== "error";
 
+  // "Synced Xm ago" is computed from sync.lastSyncedAt at render time, so
+  // without something forcing a re-render it freezes at whatever it read
+  // the moment that timestamp last changed — this tick just re-renders
+  // periodically so the elapsed time actually counts up.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!connected || sync.status !== "synced" || !sync.lastSyncedAt) return;
+    const id = setInterval(() => setTick((t) => t + 1), 5000);
+    return () => clearInterval(id);
+  }, [connected, sync.status, sync.lastSyncedAt]);
+
   if (!connected) {
     return (
       <span className="sync-pill">
         <ConnectionLed configured={false} healthy={false} />
         <span className="sync-pill-main text-faint">
-          <CloudOff size={15} /> Not connected
+          <SupabaseIcon size={15} /> Not connected
         </span>
       </span>
     );

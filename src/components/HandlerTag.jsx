@@ -16,7 +16,7 @@ export function HandlerTag({ name }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
       <Led color={c} size="sm" />
-      <span style={{ color: "var(--text-dim)", fontSize: 14.5 }}>{name}</span>
+      <span style={{ color: "var(--text-dim)", fontSize: 14.5, textTransform: "uppercase", letterSpacing: "0.02em" }}>{name}</span>
     </span>
   );
 }

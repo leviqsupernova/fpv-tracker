@@ -5,14 +5,14 @@ import { StatusLabel, ProgressBar, HandlerTag, Led } from "../../components";
 import { STATUS_META } from "../../app/statusMeta";
 import { fmtDateTime } from "../../lib/format";
 
-function DroneRow({ drone, onClick }) {
+function DroneRow({ drone, onClick, onOpenHistory }) {
   const status = computeStatus(drone);
   const meta = STATUS_META[status];
   const { done, total } = progressOf(drone);
   const flagged = hasRepairFlags(drone);
   return (
     <tr onClick={onClick}>
-      <td className="cell-serial">
+      <td className="cell-serial" data-label="Serial">
         {flagged && (
           <span className="cell-flag-led" title="Has steps flagged for repair">
             <Led color="var(--repair)" size="xs" glow={false} />
@@ -20,17 +20,27 @@ function DroneRow({ drone, onClick }) {
         )}
         {drone.serial}
       </td>
-      <td><StatusLabel meta={meta} /></td>
-      <td><ProgressBar done={done} total={total} color={meta.color} /></td>
-      <td><HandlerTag name={drone.handler} /></td>
-      <td className="cell-notes">{latestMessage(drone)}</td>
-      <td className="cell-updated">{fmtDateTime(drone.updatedAt)}</td>
-      <td className="cell-chevron"><ChevronRight size={17} /></td>
+      <td data-label="Status"><StatusLabel meta={meta} /></td>
+      <td data-label="Progress"><ProgressBar done={done} total={total} color={meta.color} /></td>
+      <td data-label="Handler"><HandlerTag name={drone.handler} /></td>
+      <td className="cell-notes" data-label="Notes">{latestMessage(drone)}</td>
+      <td className="cell-updated" data-label="Updated">{fmtDateTime(drone.updatedAt)}</td>
+      <td className="cell-chevron">
+        <button
+          type="button"
+          className="chevron-btn"
+          title="View history"
+          aria-label={`View history for ${drone.serial}`}
+          onClick={(e) => { e.stopPropagation(); onOpenHistory(drone.id); }}
+        >
+          <ChevronRight size={16} />
+        </button>
+      </td>
     </tr>
   );
 }
 
-export function FleetTable({ drones, onSelect }) {
+export function FleetTable({ drones, onSelect, onOpenHistory }) {
   if (!drones.length) {
     return <div className="empty-panel">No drones match here yet.</div>;
   }
@@ -45,7 +55,9 @@ export function FleetTable({ drones, onSelect }) {
           </tr>
         </thead>
         <tbody>
-          {drones.map((d) => <DroneRow key={d.id} drone={d} onClick={() => onSelect(d.id)} />)}
+          {drones.map((d) => (
+            <DroneRow key={d.id} drone={d} onClick={() => onSelect(d.id)} onOpenHistory={onOpenHistory} />
+          ))}
         </tbody>
       </table>
     </div>
