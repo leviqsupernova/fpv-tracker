@@ -40,10 +40,11 @@
    The deployed site has no Tailwind (that's only available inside
    Claude's own artifact preview) — these are the small set of
    flex/gap utilities the components actually use, defined for real.
-   `.flex` wraps by default — rows built from it drop onto a second
-   line instead of overflowing past the edge of their container; on
-   wide screens, where nothing needs to wrap, this changes nothing. */
-.flex { display: flex; flex-wrap: wrap; }
+   `.flex` must NOT set flex-wrap globally: these same classes are
+   used with `.flex-col`, and wrap on a column container makes items
+   spill into extra *columns* rather than extra rows. Rows that need
+   to wrap opt in with `.flex-wrap` or a dedicated class. */
+.flex { display: flex; }
 .flex-col { flex-direction: column; }
 .flex-wrap { flex-wrap: wrap; }
 .items-center { align-items: center; }
@@ -55,11 +56,27 @@
 .gap-2\.5 { gap: 10px; }
 .gap-3 { gap: 12px; }
 .gap-4 { gap: 16px; }
+/* Row-direction flex containers wrap instead of overflowing their box.
+   Explicitly excludes column containers, where wrapping would create
+   extra columns rather than extra rows. */
+.flex:not(.flex-col) { flex-wrap: wrap; }
+.flex.flex-col { flex-wrap: nowrap; }
+/* Modal footers: keep the button group intact and let it drop to its
+   own line rather than squeezing buttons narrower than their labels. */
+.flex.justify-between > .flex { flex-wrap: nowrap; }
 
 /* ---------- reset / base ---------- */
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); overflow-x: hidden; }
 body { font-family: var(--font); color: var(--text); max-width: 100vw; }
+/* `overflow-x: hidden` on html/body does not clip `position: fixed`
+   descendants — they're laid out against the viewport, not the scroll
+   container — so fixed elements are capped individually below. */
+.app-shell { overflow-x: clip; max-width: 100vw; }
+/* A flex item's default `min-width: auto` refuses to shrink below its
+   content, which is how one long unbreakable string inside a flex row
+   pushes the whole page wider than the screen. */
+.flex > *, .topbar-inner > *, .content-col > * { min-width: 0; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
@@ -81,29 +98,33 @@ select { appearance: none; }
   background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.5;
 }
 .topbar-inner {
-  max-width: 1240px; margin: 0 auto; width: 100%; padding: 10px 40px 10px 20px;
+  max-width: 1240px; margin: 0 auto; width: 100%; padding: 10px 40px 10px 78px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  min-height: 72px;
 }
 .content-col { max-width: 1240px; margin: 0 auto; width: 100%; padding: 36px 40px 80px; }
 .wordmark { font-size: 21px; letter-spacing: 0.06em; color: var(--text); font-weight: 600; }
 
-/* Sized off its own fixed height rather than the row's padding, so it
-   can fill most of the bar's height without the whole bar growing to
-   match. Kept in normal flex flow (no negative margins) so it can
-   never push the row wider than its container. */
+/* Anchored to the left edge of the viewport, not to the centred
+   1240px column — on a wide screen that column starts well inside the
+   window, which is why the logo previously sat next to the wordmark
+   instead of at the edge of the page. Taken out of the inner row's
+   flow entirely so it can fill the bar's full height without
+   stretching the row or being pushed around when the row wraps. */
 .topbar-brand {
-  display: flex; align-items: center; cursor: default;
-  height: 56px; flex-shrink: 0; min-width: 0;
+  position: absolute; left: 0; top: 0; bottom: 0; z-index: 2;
+  display: flex; align-items: center; padding: 8px 0 8px 18px; cursor: default;
 }
-.brand-logo { display: block; height: 100%; max-width: 100%; width: auto; object-fit: contain; }
+.brand-logo { display: block; height: 100%; width: auto; max-height: 56px; object-fit: contain; }
 [data-theme-mode="light"] .brand-logo { filter: invert(1); }
 .cursor-blink { display: inline-block; color: var(--accent); margin-left: 2px; animation: blink 1.1s step-end infinite; }
 @keyframes blink { 0%, 45% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
 @media (max-width: 860px) {
-  .topbar-inner { padding-left: 14px; padding-right: 20px; }
+  .topbar-inner { padding-left: 62px; padding-right: 20px; min-height: 64px; }
   .content-col { padding-left: 20px; padding-right: 20px; }
-  .topbar-brand { height: 44px; }
+  .topbar-brand { padding-left: 12px; }
+  .brand-logo { max-height: 44px; }
 }
 
 /* ---------- buttons ---------- */
@@ -197,7 +218,7 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 .handler-tag-empty { color: var(--text-faint); }
 
 /* ---------- stats strip ---------- */
-.stats-strip { display: flex; flex-wrap: wrap; background: var(--bg-panel); border: 1px solid var(--border); }
+.stats-strip { display: flex; flex-wrap: wrap; background: var(--bg-panel); border: 1px solid var(--border); max-width: 100%; }
 .stats-cell { padding: 16px 24px; min-width: 130px; border-right: 1px solid var(--border); }
 .stats-cell:last-child { border-right: none; }
 .stats-value-row { display: flex; align-items: center; gap: 10px; }
@@ -210,7 +231,7 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 }
 
 /* ---------- fleet table ---------- */
-.fleet-table-wrap { border: 1px solid var(--border); border-radius: 4px; overflow: auto; }
+.fleet-table-wrap { border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; max-width: 100%; }
 .fleet-table { width: 100%; border-collapse: collapse; min-width: 820px; }
 .fleet-table thead tr { border-bottom: 1px solid var(--border); background: var(--bg-panel); }
 .fleet-table th {
@@ -258,8 +279,10 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
     content: attr(data-label); color: var(--text-faint); font-size: 11.5px; letter-spacing: 0.06em;
     flex-shrink: 0;
   }
-  .cell-serial { font-size: 15.5px; }
-  .cell-notes { max-width: none; white-space: normal; text-align: right; overflow: visible; }
+  /* Values take the remaining space and are allowed to break, so a long
+     serial or note can't widen the card past the screen. */
+  .cell-serial { font-size: 15.5px; min-width: 0; overflow-wrap: anywhere; text-align: right; }
+  .cell-notes { max-width: none; white-space: normal; text-align: right; overflow: visible; overflow-wrap: anywhere; min-width: 0; }
   .cell-updated { text-align: right; }
   .cell-chevron { width: 100%; }
   .cell-chevron::before { content: "History"; }
@@ -298,7 +321,10 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 
 /* ---------- sync pill ---------- */
 .sync-pill { display: inline-flex; align-items: center; gap: 12px; }
-.sync-pill-main { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; }
+.sync-pill-main {
+  display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px;
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
 .sync-pill-live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
 .sync-saving .led { animation: pulse 1s var(--ease) infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
@@ -310,7 +336,7 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 
 /* ---------- side panel (drone detail) ---------- */
 .side-panel {
-  position: fixed; top: 0; right: 0; height: 100%; width: 520px;
+  position: fixed; top: 0; right: 0; height: 100%; width: 520px; max-width: 100vw;
   background: var(--bg-panel); border-left: 1px solid var(--border); z-index: 40;
   box-shadow: -16px 0 40px rgba(0, 0, 0, 0.35);
   animation: panel-in 0.22s var(--ease); display: flex; flex-direction: column; overflow: hidden;
@@ -349,6 +375,13 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 .handler-edit-trigger:hover .handler-edit-icon { opacity: 1; }
 .handler-select { width: auto; min-width: 140px; }
 .handler-edit-row { display: flex; align-items: center; gap: 10px; }
+/* The name field takes the leftover space; the LED and the remove
+   button keep their intrinsic size instead of being stretched. */
+.handler-edit-row > .MuiTextField-root { flex: 1 1 auto; min-width: 0; }
+.handler-edit-row > .led, .handler-edit-row > .MuiIconButton-root { flex: 0 0 auto; }
+/* Same shape for the "add a name" row underneath it. */
+.handler-add-row { display: flex; align-items: center; gap: 10px; }
+.handler-add-row > .MuiTextField-root { flex: 1 1 auto; min-width: 0; }
 
 .finish-btn { width: 100%; justify-content: center; margin-top: 28px; }
 
@@ -478,10 +511,10 @@ textarea.input { height: auto; min-height: 90px; resize: vertical; }
 .firmware-row .firmware-tag { color: var(--text-faint); font-size: 12px; }
 
 /* ---------- toast (offline sync notice) ---------- */
-.toast-stack { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.toast-stack { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 60; max-width: calc(100vw - 32px); display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .toast {
   background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--text);
-  font-size: 13px; padding: 10px 16px; border-radius: 6px;
+  font-size: 13px; padding: 10px 16px; border-radius: 6px; max-width: 100%; word-break: break-word;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); animation: egg-toast-in 0.25s var(--ease);
   display: flex; align-items: center; gap: 8px;
 }

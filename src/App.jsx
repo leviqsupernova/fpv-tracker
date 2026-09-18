@@ -279,11 +279,11 @@ export default function App() {
     <div className="app-shell">
       {/* TOP BAR */}
       <div className="topbar">
+        <span className="topbar-brand" onClick={handleLogoClick}>
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="brand-logo" />
+        </span>
         <div className="topbar-inner">
           <div className="flex items-center gap-4">
-            <span className="topbar-brand" onClick={handleLogoClick}>
-              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="brand-logo" />
-            </span>
             <Led color="var(--accent)" size="lg" />
             <span className="wordmark">FPV TRACKER<span className="cursor-blink">▊</span></span>
           </div>
@@ -325,14 +325,14 @@ export default function App() {
         {availableYears.length > 0 && (
           <div className="filter-row" style={{ marginBottom: 8 }}>
             <span className="filter-row-label">PERIOD</span>
-            <Chip active={yearFilter == null} onClick={() => { setYearFilter(null); setMonthFilter(null); }}>All time</Chip>
+            <Chip active={yearFilter == null} onClick={() => { setYearFilter(null); setMonthFilter(null); }}>All Time</Chip>
             {availableYears.map((y) => <Chip key={y} active={yearFilter === y} onClick={() => { setYearFilter(y); setMonthFilter(null); }}>{y}</Chip>)}
           </div>
         )}
         {yearFilter != null && availableMonths.length > 0 && (
           <div className="filter-row" style={{ marginBottom: 20 }}>
             <span className="filter-row-spacer" />
-            <Chip active={monthFilter == null} onClick={() => setMonthFilter(null)}>All of {yearFilter}</Chip>
+            <Chip active={monthFilter == null} onClick={() => setMonthFilter(null)}>All Of {yearFilter}</Chip>
             {availableMonths.map((m) => <Chip key={m} active={monthFilter === m} onClick={() => setMonthFilter(m)}>{MONTH_NAMES[m]}</Chip>)}
           </div>
         )}

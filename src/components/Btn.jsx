@@ -44,6 +44,11 @@ export function Btn({ children, onClick, variant = "ghost", icon: Icon, disabled
         border: "1px solid",
         fontSize: size === "sm" ? 13 : 14,
         padding: size === "sm" ? "8px 14px" : "11px 18px",
+        // Buttons sit in rows alongside other buttons; without these they
+        // shrink below their label width and the text overflows the box.
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+        lineHeight: 1.4,
         transition: "background 0.15s, border-color 0.15s, transform 0.1s, opacity 0.15s",
         "&:active": { transform: "scale(0.97)" },
         "&.Mui-disabled": { opacity: 0.4, cursor: "not-allowed", borderColor: "var(--border)", color: "var(--text-faint)" },

@@ -27,7 +27,7 @@ export function HandlersModal({ handlers, onClose, onSave }) {
             </div>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="handler-add-row">
           <TextInput
             placeholder="Add a name…"
             value={newName}

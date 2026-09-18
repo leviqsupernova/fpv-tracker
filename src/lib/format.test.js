@@ -7,21 +7,19 @@ describe("fmtAgo", () => {
     expect(fmtAgo("")).toBe("");
   });
 
-  it("reports just now for a timestamp seconds ago", () => {
-    expect(fmtAgo(new Date(Date.now() - 3000).toISOString())).toBe("just now");
-  });
-
-  it("reports seconds for under a minute", () => {
+  it("reports seconds under a minute", () => {
+    expect(fmtAgo(new Date(Date.now() - 3000).toISOString())).toBe("3s ago");
     expect(fmtAgo(new Date(Date.now() - 45_000).toISOString())).toBe("45s ago");
   });
 
-  it("reports minutes for under an hour", () => {
-    expect(fmtAgo(new Date(Date.now() - 5 * 60_000).toISOString())).toBe("5m ago");
+  it("reports minutes and seconds under an hour", () => {
+    expect(fmtAgo(new Date(Date.now() - 5 * 60_000).toISOString())).toBe("5m 00s ago");
+    expect(fmtAgo(new Date(Date.now() - (5 * 60_000 + 7000)).toISOString())).toBe("5m 07s ago");
   });
 
-  it("falls back to a full date/time past an hour", () => {
-    const iso = new Date(Date.now() - 2 * 3600_000).toISOString();
-    expect(fmtAgo(iso)).toMatch(/·/);
+  it("reports hours, minutes and seconds past an hour", () => {
+    const ms = 2 * 3600_000 + 3 * 60_000 + 4000;
+    expect(fmtAgo(new Date(Date.now() - ms).toISOString())).toBe("2h 03m 04s ago");
   });
 });
 

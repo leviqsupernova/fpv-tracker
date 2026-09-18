@@ -7,16 +7,18 @@ import { fmtAgo } from "../../lib/format";
 export function SyncPill({ sync, connected, realtimeStatus, online = true }) {
   const healthy = connected && online && sync.status !== "error" && sync.status !== "offline" && realtimeStatus !== "error";
 
-  // "Synced Xm ago" is computed from sync.lastSyncedAt at render time, so
-  // without something forcing a re-render it freezes at whatever it read
-  // the moment that timestamp last changed — this tick just re-renders
-  // periodically so the elapsed time actually counts up.
+  // The elapsed-time readout is derived from sync.lastSyncedAt at render
+  // time, so it only moves when something else re-renders this component
+  // — which is why it previously appeared to change only when a button
+  // was clicked. This ticks once a second whenever there's a timestamp to
+  // count from, regardless of the current status, so the readout advances
+  // on its own.
   const [, setTick] = useState(0);
   useEffect(() => {
-    if (!connected || sync.status !== "synced" || !sync.lastSyncedAt) return;
-    const id = setInterval(() => setTick((t) => t + 1), 5000);
+    if (!connected || !sync.lastSyncedAt) return;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
-  }, [connected, sync.status, sync.lastSyncedAt]);
+  }, [connected, sync.lastSyncedAt]);
 
   if (!connected) {
     return (

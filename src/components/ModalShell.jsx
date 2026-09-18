@@ -13,7 +13,10 @@ export function ModalShell({ title, icon: Icon, onClose, children, width = 460 }
       PaperProps={{
         sx: {
           width,
-          maxWidth: "90vw",
+          // 90vw alone still overflows: MUI adds a 32px margin on each
+          // side of the paper, so the outer box came to 90vw + 64px.
+          maxWidth: "calc(100vw - 32px)",
+          margin: "16px",
           backgroundColor: "var(--bg-panel)",
           border: "1px solid var(--border)",
           borderRadius: "6px",
@@ -35,7 +38,13 @@ export function ModalShell({ title, icon: Icon, onClose, children, width = 460 }
         </span>
         <IconBtn icon={X} onClick={onClose} title="Close" />
       </DialogTitle>
-      <DialogContent sx={{ padding: "24px" }}>{children}</DialogContent>
+      {/* MUI's own `.MuiDialogTitle-root + .MuiDialogContent-root` rule
+          forces padding-top:0, which outranks a plain `padding` in sx —
+          that's what pulled the first row of every modal up against the
+          header divider. Matching its specificity restores the padding. */}
+      <DialogContent sx={{ padding: "24px", "&.MuiDialogContent-root": { paddingTop: "24px" } }}>
+        {children}
+      </DialogContent>
     </Dialog>
   );
 }

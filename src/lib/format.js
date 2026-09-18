@@ -31,11 +31,17 @@ export function fmtDateFull(iso) {
   return d.toISOString().slice(0, 16).replace("T", " ");
 }
 
+/** Elapsed time since `iso`, always down to the second so a ticking
+ *  readout visibly moves every second. Units are added as they become
+ *  relevant: "12s ago" → "3m 12s ago" → "2h 03m 12s ago". */
 export function fmtAgo(iso) {
   if (!iso) return "";
-  const secs = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
-  if (secs < 10) return "just now";
-  if (secs < 60) return `${secs}s ago`;
-  if (secs < 3600) return `${Math.round(secs / 60)}m ago`;
-  return fmtDateTime(iso);
+  const total = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  if (h > 0) return `${h}h ${pad(m)}m ${pad(s)}s ago`;
+  if (m > 0) return `${m}m ${pad(s)}s ago`;
+  return `${s}s ago`;
 }
